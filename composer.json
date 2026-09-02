@@ -1,0 +1,50 @@
+{
+  "name": "tempcord/http",
+  "description": "HTTP server plugin for the Tempcord Discord bot framework",
+  "type": "library",
+  "license": "MIT",
+  "require": {
+    "php": "^8.5",
+    "tempcord/framework": ">=0.12 <1.0",
+    "react/http": "^1.11",
+    "react/socket": "^1.16",
+    "react/event-loop": "^1.3",
+    "react/promise": "^3",
+    "psr/http-message": "^1.1 || ^2.0",
+    "tempest/core": "^3.18",
+    "tempest/log": "^3.18"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^13.0",
+    "phpstan/phpstan": "^2.0"
+  },
+  "authors": [
+    {
+      "name": "CyberWolf.Studio",
+      "email": "hello@cyberwolf.studio",
+      "homepage": "https://cyberwolf.studio",
+      "role": "Developer"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "config": {
+    "sort-packages": true,
+    "optimize-autoloader": true
+  },
+  "keywords": ["discord", "bot", "framework", "php", "http", "server", "tempcord"],
+  "autoload": {
+    "psr-4": {
+      "Tempcord\\Plugins\\Http\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tempcord\\Plugins\\Http\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "test": "phpunit",
+    "analyse": "phpstan analyse --memory-limit=1G"
+  }
+}

@@ -1,0 +1,11 @@
+parameters:
+    level: 5
+    paths:
+        - src
+        - tests
+    excludePaths:
+        - tests/Fixtures
+    # Fixtures are not analysed — they exist to be malformed in interesting ways
+    # — but a test naming one still has to resolve to something.
+    scanDirectories:
+        - tests/Fixtures
