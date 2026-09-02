@@ -7,8 +7,10 @@ namespace Tempcord\Plugins\Http;
 use Psr\Http\Message\ServerRequestInterface;
 use Tempcord\Plugins\Http\Definitions\RouteDefinition;
 use Tempcord\Plugins\Http\Http\Method;
+use Tempcord\Plugins\Http\Http\Middleware;
 use Tempcord\Plugins\Http\Http\Request;
 use Tempcord\Plugins\Http\Http\Response;
+use RuntimeException;
 use Tempest\Container\Container;
 use Tempest\Container\Singleton;
 use Tempest\Log\Logger;
@@ -28,7 +30,6 @@ final class Router
 
     public function __construct(
         private readonly Container $container,
-        private readonly Logger $logger,
     ) {}
 
     public function add(RouteDefinition $route): void
@@ -80,17 +81,14 @@ final class Router
     private function call(RouteDefinition $route, Request $request): Response
     {
         try {
-            $answer = $route->invoke->invokeArgs(
-                $this->container->get($route->handler),
-                $this->argumentsFor($route, $request),
-            );
+            return $this->through($route)($request);
         } catch (Throwable $throwable) {
             /*
              * Contained, and deliberately vague to the caller: whatever went
              * wrong is in the log, and an exception message is not something to
              * hand to whoever is on the other end of the socket.
              */
-            $this->logger->error(
+            $this->logger()->error(
                 'Route ' . $route->method->value . ' ' . $route->path . ' failed: '
                 . $throwable->getMessage(),
                 ['exception' => $throwable],
@@ -98,8 +96,64 @@ final class Router
 
             return Response::json(['error' => 'Internal Server Error'], 500);
         }
+    }
 
-        return $answer instanceof Response ? $answer : Response::noContent();
+    /**
+     * The handler, wrapped in its middleware.
+     *
+     * Built from the inside out so that the first one listed ends up outermost,
+     * which is the order anyone reading the attribute expects — and the order
+     * that matters when one of them is the check that says whether the caller
+     * may be here at all.
+     *
+     * @return callable(Request): Response
+     */
+    private function through(RouteDefinition $route): callable
+    {
+        /*
+         * Normalised here rather than after the middleware have run, so that
+         * one of them wrapping the answer is handed a Response and not
+         * whatever a handler happened to return.
+         */
+        $next = function (Request $request) use ($route): Response {
+            $answer = $route->invoke->invokeArgs(
+                $this->container->get($route->handler),
+                $this->argumentsFor($route, $request),
+            );
+
+            return $answer instanceof Response ? $answer : Response::noContent();
+        };
+
+        foreach (array_reverse($route->middleware) as $middleware) {
+            $inner = $next;
+            $next = fn(Request $request): Response => $this->middleware($middleware)($request, $inner);
+        }
+
+        return $next;
+    }
+
+    private function middleware(string $class): Middleware
+    {
+        $middleware = $this->container->get($class);
+
+        if (!$middleware instanceof Middleware) {
+            throw new RuntimeException($class . ' must implement ' . Middleware::class);
+        }
+
+        return $middleware;
+    }
+
+    /**
+     * Resolved when something goes wrong rather than in the constructor.
+     *
+     * Discovery builds this router while the container is still being
+     * assembled, before the initializers that provide the logger have
+     * themselves been found — asking for one up front makes the whole
+     * application fail to boot.
+     */
+    private function logger(): Logger
+    {
+        return $this->container->get(Logger::class);
     }
 
     /**

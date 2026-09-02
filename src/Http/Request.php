@@ -53,6 +53,39 @@ final readonly class Request
         return $this->psr->hasHeader($name) ? $this->psr->getHeaderLine($name) : null;
     }
 
+    /**
+     * A cookie the browser sent, read off this request's own header.
+     *
+     * Never $_COOKIE: in a long-running server the superglobals hold whatever
+     * the process was started with, not what the person on the other end of
+     * this socket sent.
+     */
+    public function cookie(string $name): ?string
+    {
+        $cookies = $this->psr->getCookieParams();
+        $value = $cookies[$name] ?? null;
+
+        return is_scalar($value) ? (string) $value : null;
+    }
+
+    /**
+     * The token from an "Authorization: Bearer ..." header.
+     *
+     * Only Bearer: anything else is a different scheme with different rules,
+     * and quietly treating it as a token would accept credentials meant for
+     * something else entirely.
+     */
+    public function bearerToken(): ?string
+    {
+        $header = $this->header('Authorization');
+
+        if ($header === null || !preg_match('/\ABearer\s+(\S+)\z/i', $header, $found)) {
+            return null;
+        }
+
+        return $found[1];
+    }
+
     public function body(): string
     {
         return (string) $this->psr->getBody();

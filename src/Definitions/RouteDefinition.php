@@ -17,6 +17,7 @@ final readonly class RouteDefinition
      *        segment captured under its own name
      * @param list<string> $parameters the segment names, in the order the path
      *        declares them
+     * @param list<class-string<\Tempcord\Plugins\Http\Http\Middleware>> $middleware
      */
     public function __construct(
         public Method $method,
@@ -25,6 +26,7 @@ final readonly class RouteDefinition
         public array $parameters,
         public string $handler,
         public MethodReflector $invoke,
+        public array $middleware = [],
     ) {}
 
     /**
