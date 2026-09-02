@@ -47,7 +47,7 @@ final class RouterTest extends TestCase
         $container = new GenericContainer();
         $container->singleton(Logger::class, $this->logger);
 
-        $router = new Router($container, $this->logger);
+        $router = new Router($container);
         $compiler = new RouteCompiler();
 
         foreach ($classes as $class) {
@@ -221,6 +221,32 @@ final class RouterTest extends TestCase
         $this->expectExceptionMessage('must start with "/"');
 
         $this->router(Relative::class);
+    }
+
+    /**
+     * Discovery builds the router while the container is still being assembled,
+     * before the initializers that provide the logger have themselves been
+     * found. Asking for one in the constructor made every application using
+     * this plugin fail to boot — including ones with no routes at all.
+     */
+    public function test_it_can_be_built_before_the_container_has_a_logger(): void
+    {
+        $router = new Router(new GenericContainer());
+
+        $this->assertSame([], $router->all());
+        $this->assertSame(404, $this->get($router, '/anything')->status);
+    }
+
+    /**
+     * And the logger is still there when something actually goes wrong.
+     */
+    public function test_a_failure_is_logged_once_the_container_can_provide_one(): void
+    {
+        $router = $this->router(Boom::class);
+
+        $this->get($router, '/boom');
+
+        $this->assertTrue($this->logger->has('the database is on fire'));
     }
 
     public function test_it_lists_what_it_serves(): void

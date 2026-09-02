@@ -28,7 +28,6 @@ final class Router
 
     public function __construct(
         private readonly Container $container,
-        private readonly Logger $logger,
     ) {}
 
     public function add(RouteDefinition $route): void
@@ -90,7 +89,7 @@ final class Router
              * wrong is in the log, and an exception message is not something to
              * hand to whoever is on the other end of the socket.
              */
-            $this->logger->error(
+            $this->logger()->error(
                 'Route ' . $route->method->value . ' ' . $route->path . ' failed: '
                 . $throwable->getMessage(),
                 ['exception' => $throwable],
@@ -100,6 +99,19 @@ final class Router
         }
 
         return $answer instanceof Response ? $answer : Response::noContent();
+    }
+
+    /**
+     * Resolved when something goes wrong rather than in the constructor.
+     *
+     * Discovery builds this router while the container is still being
+     * assembled, before the initializers that provide the logger have
+     * themselves been found — asking for one up front makes the whole
+     * application fail to boot.
+     */
+    private function logger(): Logger
+    {
+        return $this->container->get(Logger::class);
     }
 
     /**
