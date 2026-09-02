@@ -27,8 +27,14 @@ use Tempcord\Plugins\Http\Http\Method;
 #[Attribute(Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
 final readonly class Route
 {
+    /**
+     * @param list<class-string<\Tempcord\Plugins\Http\Http\Middleware>> $middleware
+     *        run in the order given, outermost first; any of them may answer
+     *        instead of letting the handler run
+     */
     public function __construct(
         public Method $method,
         public string $path,
+        public array $middleware = [],
     ) {}
 }

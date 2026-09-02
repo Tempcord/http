@@ -106,6 +106,31 @@ $request->psr;                   // the PSR-7 request, for everything else
 is an ordinary thing to receive from the open internet, and a handler replying
 `400` reads better than one wrapped in a `try`.
 
+## Middleware
+
+```php
+#[Route(Method::POST, '/api/links', middleware: [VerifySignature::class])]
+final readonly class CreateLink { /* ... */ }
+```
+
+```php
+final readonly class VerifySignature implements Middleware
+{
+    public function __invoke(Request $request, callable $next): Response
+    {
+        return $this->valid($request) ? $next($request) : Response::unauthorized();
+    }
+}
+```
+
+The first one listed is outermost. Returning an answer instead of calling
+`$next` stops the request there — the handler never runs, and neither does any
+middleware behind it. That is the whole reason this exists: a check on whether
+the caller may be asking has to be able to stop the work, not merely disapprove
+of it afterwards.
+
+Middleware are built by the container, so they may take whatever they need.
+
 ## Deciding who is asking
 
 There are no sessions here, and that is deliberate — see below. What there is

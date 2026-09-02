@@ -39,6 +39,7 @@ final readonly class RouteCompiler
             parameters: $parameters,
             handler: $class->getName(),
             invoke: $class->getMethod('__invoke'),
+            middleware: $route->middleware,
         );
     }
 
