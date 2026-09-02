@@ -15,12 +15,33 @@ use React\Http\Message\Response as ReactResponse;
  */
 final readonly class Response
 {
+    /**
+     * @param array<string, string> $headers
+     * @param list<Cookie> $cookies
+     */
     private function __construct(
         public int $status,
         public string $body,
-        /** @var array<string, string> */
         public array $headers,
+        public array $cookies = [],
     ) {}
+
+    /**
+     * The same answer, with a cookie set on it.
+     *
+     * On the response rather than through setcookie(): there are no headers to
+     * send in a long-running server, and a cookie belongs to one answer rather
+     * than to the process that happened to build it.
+     */
+    public function withCookie(Cookie $cookie): self
+    {
+        return new self($this->status, $this->body, $this->headers, [...$this->cookies, $cookie]);
+    }
+
+    public function withHeader(string $name, string $value): self
+    {
+        return new self($this->status, $this->body, [...$this->headers, $name => $value], $this->cookies);
+    }
 
     /**
      * @param array<string, string> $headers
@@ -65,6 +86,19 @@ final readonly class Response
 
     public function toReact(): ReactResponse
     {
-        return new ReactResponse($this->status, $this->headers, $this->body);
+        $headers = $this->headers;
+
+        /*
+         * Set-Cookie is the one header that may legitimately appear more than
+         * once, so the values go out as a list rather than being joined.
+         */
+        if ($this->cookies !== []) {
+            $headers['Set-Cookie'] = array_map(
+                static fn(Cookie $cookie) => $cookie->header(),
+                $this->cookies,
+            );
+        }
+
+        return new ReactResponse($this->status, $headers, $this->body);
     }
 }
