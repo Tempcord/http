@@ -5,7 +5,7 @@
   "license": "MIT",
   "require": {
     "php": "^8.5",
-    "tempcord/framework": ">=0.12 <1.0",
+    "tempcord/framework": ">=0.12 <2.0",
     "react/http": "^1.11",
     "react/socket": "^1.16",
     "react/event-loop": "^1.3",
