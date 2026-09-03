@@ -1,3 +1,9 @@
+## [1.1.1](https://github.com/Tempcord/http/compare/v1.1.0...v1.1.1) (2026-09-03)
+
+### Bug Fixes
+
+* **deps:** allow the framework's 1.x line ([c61a036](https://github.com/Tempcord/http/commit/c61a036d735e36936ba5fa8329bbf889cfbdf486))
+
 ## [1.1.0](https://github.com/Tempcord/http/compare/v1.0.0...v1.1.0) (2026-09-02)
 
 ### Features
