@@ -8,7 +8,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\Loop;
 use React\Http\HttpServer;
 use React\Socket\SocketServer;
-use Tempcord\Plugins\Plugin;
+use Tempcord\Declare\Contracts\Plugin;
 use Tempcord\Tempcord;
 use Tempest\Log\Logger;
 use Throwable;
